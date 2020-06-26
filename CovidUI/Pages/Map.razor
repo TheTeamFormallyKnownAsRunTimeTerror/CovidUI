@@ -1,18 +1,34 @@
 ﻿@page "/map"
-
+@using System.Net.Http
+@using CovidUI.Responses
+@inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<h1>Display Bing Map</h1>
+<h1>Display Map</h1>
 <div id="map" style="height:500px;width:100%;"> </div>
 
 @code {
+
+    private int active;
+    private int recovered;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("loadBingMap", null);
+            await FetchCountryData();
+            await JSRuntime.InvokeVoidAsync("loadBingMap", active, recovered);
         }
+    }
+
+    private async Task FetchCountryData()
+    {
+
+        var response = await Http.GetAsync(new Uri("http://localhost:5000/api/Country/latest/IE"));
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var data = System.Text.Json.JsonSerializer.Deserialize<CountryData>(responseContent);
+        active = data.ActiveCases;
+        recovered = data.Recovered;
     }
 
 }
