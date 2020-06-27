@@ -12,26 +12,37 @@
     private int active;
     private int recovered;
 
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await FetchCountryData();
-            await JSRuntime.InvokeVoidAsync("loadBingMap", active, recovered);
+
+            var countryInfo = await GetCountriesWithData();
+            await JSRuntime.InvokeVoidAsync("loadBingMap", countryInfo);
         }
     }
 
-    private async Task FetchCountryData()
+    [JSInvokable]
+    public async Task FetchCountryData(string countryCode)
     {
 
-        var response = await Http.GetAsync(new Uri("http://localhost:5000/api/Country/latest/IE"));
+        var countryUrl = $"http://localhost:5000/api/Country/latest/{countryCode}";
+        var response = await Http.GetAsync(countryUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
         var data = System.Text.Json.JsonSerializer.Deserialize<CountryData>(responseContent);
         active = data.ActiveCases;
         recovered = data.Recovered;
+
     }
 
-}
-@code {
+    private async Task<string> GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://localhost:5000/api/Country/countries";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        //var data = System.Text.Json.JsonSerializer.Deserialize<List<CountryInfo>>(responseContent);
 
+        return responseContent;
+    }
 }

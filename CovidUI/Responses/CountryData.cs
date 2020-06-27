@@ -15,8 +15,14 @@ namespace CovidUI.Responses
         public int ConfirmedCases { get; set; }
         [JsonPropertyName("countryCode")]
         public string CountryCode { get; set; }
+        [JsonPropertyName("countryName")]
+        public string CountryName { get; set; }
         [JsonPropertyName("deaths")]
         public int Deaths { get; set; }
+        [JsonPropertyName("latitude")]
+        public float Latitude { get; set; }
+        [JsonPropertyName("longitude")]
+        public float Longitude { get; set; }
         [JsonPropertyName("recovered")]
         public int Recovered { get; set; }
     }
