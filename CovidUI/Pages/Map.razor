@@ -42,16 +42,6 @@
         }
     }
 
-    [JSInvokable]
-    public async Task FetchCountryData(string countryCode)
-    {
-
-        var countryUrl = $"http://localhost:5000/api/Country/latest/{countryCode}";
-        var response = await Http.GetAsync(countryUrl);
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var data = System.Text.Json.JsonSerializer.Deserialize<CountryData>(responseContent);
-    }
-
     private async Task GetCountriesWithData()
     {
         var countryInfoUrl = "http://localhost:5000/api/Country/countries";

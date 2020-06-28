@@ -1,0 +1,60 @@
+﻿@page "/analytics"
+@using System.Net.Http
+@using CovidUI.Responses
+@inject HttpClient Http  
+
+<h1>Analytics</h1>
+
+<p>Historic Irish trend</p>
+
+
+<LineChart @ref="lineChart" TItem="int" />
+
+
+@code {
+    LineChart<int> lineChart;
+    List<HistoricCountryData> historicData;
+
+    List<string> Labels = new List<string>() { "test1", "test2", "test3" };
+
+    List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 0.2f), ChartColor.FromRgba(54, 162, 235, 0.2f), ChartColor.FromRgba(255, 206, 86, 0.2f), ChartColor.FromRgba(75, 192, 192, 0.2f), ChartColor.FromRgba(153, 102, 255, 0.2f), ChartColor.FromRgba(255, 159, 64, 0.2f) };
+    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            await FetchHistoricCountryData();
+            await lineChart.Clear();
+            await lineChart.AddDataSet(GetChartDataSet());
+
+            historicData.ForEach(hd => lineChart.AddLabel(hd.Date.ToString()));
+
+            await lineChart.Update();
+        }
+    }
+
+    private async Task FetchHistoricCountryData()
+    {
+
+        var response = await Http.GetAsync(new Uri("http://localhost:5000/api/Country/historic/IE"));
+        var responseContent = await response.Content.ReadAsStringAsync();
+        historicData = System.Text.Json.JsonSerializer.Deserialize<List<HistoricCountryData>>(responseContent);
+
+    }
+
+    private LineChartDataset<int> GetChartDataSet()
+    {
+        return new LineChartDataset<int>()
+        {
+            Label = "Active cases",
+            Data = historicData.Select(hd => hd.Active).ToList(),
+            BackgroundColor = backgroundColors,
+            BorderColor = borderColors,
+            Fill = true,
+            PointRadius = 2,
+            BorderDash = new List<int>()
+
+        };
+    }
+}
