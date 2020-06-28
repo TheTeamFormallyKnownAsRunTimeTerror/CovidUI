@@ -1,7 +1,8 @@
 ﻿var map, infobox;
 var pushpins = [];
 
-function loadBingMap(countryInfo) {
+
+function loadBingMap(countries) {
 
     map = new Microsoft.Maps.Map(document.getElementById('map'),
         {
@@ -9,17 +10,17 @@ function loadBingMap(countryInfo) {
         });
     infobox = new Microsoft.Maps.Infobox(map.getCenter(), { visible: false });
     infobox.setMap(map);
-
-    var countries = JSON.parse(countryInfo);
-
+    
     countries.forEach(country => {
         var pushpin = new Microsoft.Maps.Pushpin({ latitude: country["latitude"], longitude: country["longitude"]}, null);
         pushpin.metadata = {
-            countryCode: country["countryId"],
+            countryCode: country["countryCode"],
             countryName: country["countryName"],
             active: country["activeCases"],
             recovered: country["recovered"],
-            deaths: country["deaths"]
+            deaths: country["deaths"],
+            latitude: country["latitude"],
+            longitude: country["longitude"]
         };
 
         Microsoft.Maps.Events.addHandler(pushpin, 'click', pushpinClicked);
@@ -31,18 +32,46 @@ function loadBingMap(countryInfo) {
 }
 
 function pushpinClicked(e) {
+    showInfoBox(e.target);
+}
 
-    if (e.target.metadata) {
-        var description = createDescription(e.target.metadata);
+function showInfoBox(target) {
+    if (target.metadata) {
+        var description = createDescription(target.metadata);
         infobox.setOptions({
-            location: e.target.getLocation(),
-            title: e.target.metadata.countryName,
+            location: target.getLocation(),
+            title: target.metadata.countryName,
             description: description,
             visible: true
         });
     }
 }
 
+function changeMapView(latitude, longitude) {
+    map.setView({
+        center : new Microsoft.Maps.Location(latitude, longitude),
+        zoom: 8
+    });
+}
+
 function createDescription(data) {
     return "<p>Active: " + data.active + "<br/>Recovered: " + data.recovered + "<br/>Deaths: " + data.deaths + "</p>";
+}
+
+function searchCountryOnMap(country)
+{
+    var countryPushpin = undefined;
+
+    for (let i = 0; i < pushpins.length; ++i) {
+        var pushpin = pushpins[i];
+        if (pushpin.metadata && pushpin.metadata.countryName === country) {
+            countryPushpin = pushpin;
+            break;
+        }
+    }
+
+    if (countryPushpin) {
+        changeMapView(countryPushpin.metadata["latitude"], countryPushpin.metadata["longitude"]);
+        showInfoBox(countryPushpin);
+    }
 }

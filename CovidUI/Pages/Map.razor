@@ -4,22 +4,41 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<h1>Display Map</h1>
+<h1>World Map</h1>
+<p>
+    <div>
+        <input type="text" @bind-value="country" placeholder="Search for a country..."/>
+        <input type="button" value="Search" @onclick="@SearchCountry">
+    </div>
+ </p>
+
+
+<div><p>
+    Length:
+    @if (CountryData != null)
+    {
+        @CountryData.Count
+    }
+
+</p>
+    
+ </div>
+
 <div id="map" style="height:500px;width:100%;"> </div>
 
 @code {
 
-    private int active;
-    private int recovered;
 
+    private List<CountryData> CountryData { get; set; }
+
+    private string country;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-
-            var countryInfo = await GetCountriesWithData();
-            await JSRuntime.InvokeVoidAsync("loadBingMap", countryInfo);
+            await GetCountriesWithData();
+            await JSRuntime.InvokeVoidAsync("loadBingMap", CountryData);
         }
     }
 
@@ -31,18 +50,24 @@
         var response = await Http.GetAsync(countryUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
         var data = System.Text.Json.JsonSerializer.Deserialize<CountryData>(responseContent);
-        active = data.ActiveCases;
-        recovered = data.Recovered;
-
     }
 
-    private async Task<string> GetCountriesWithData()
+    private async Task GetCountriesWithData()
     {
         var countryInfoUrl = "http://localhost:5000/api/Country/countries";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
-        //var data = System.Text.Json.JsonSerializer.Deserialize<List<CountryInfo>>(responseContent);
 
-        return responseContent;
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CountryData>>(responseContent); //TODO
+    }
+
+    private async Task SearchCountry()
+    {
+        if(country == null)
+        {
+            return;
+        }
+        
+        await JSRuntime.InvokeVoidAsync("searchCountryOnMap", country);
     }
 }
