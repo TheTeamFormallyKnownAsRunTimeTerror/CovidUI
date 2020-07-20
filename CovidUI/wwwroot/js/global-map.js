@@ -69,42 +69,42 @@
         }
     });
 
-    jQuery.getJSON("http://localhost:5000/api/Country/countries",
-        function(countryInfos) {
+
             // Set up data for countries
             var data = [];
             var countryInfo = countries;
-            for (var id in am4geodata_data_countries2) {
-                if (am4geodata_data_countries2.hasOwnProperty(id)) {
-                    var country = am4geodata_data_countries2[id];
-                    if (country.maps.length) {
+    for (var id in am4geodata_data_countries2) {
+        if (am4geodata_data_countries2.hasOwnProperty(id)) {
+            var country = am4geodata_data_countries2[id];
+            if (country.maps.length) {
 
-                        var nActiveCases = 0;
-                        nTotalDeaths = 0;
-                        nTotalRecovered = 0;
+                var nActiveCases = 0;
+                nTotalDeaths = 0;
+                nTotalRecovered = 0;
+                
+                var currentCountryRecord = countryInfo.filter(c => c.countryName.toLowerCase() === country.country.toLowerCase());
 
-                        var currentCountryRecord = countryInfos.data[country.countryName.toLowerCase()];
-
-                        if (typeof currentCountryRecord !== "undefined" && currentCountryRecord !== null) {
-                            nActiveCases = currentCountryRecord.ActiveCases;
-                            nTotalDeaths = currentCountryRecord.Deaths;
-                            nTotalRecovered = currentCountryRecord.Recovered;
-                        }
-
-
-                        data.push({
-                            id: id,
-                            color: chart.colors.getIndex(continents[country.continent_code]),
-                            map: country.maps[0],
-                            countryName: country.country,
-                            activeCases: nActiveCases,
-                            totalDeaths: nTotalDeaths,
-                            recovered: nTotalRecovered
-
-                        });
-                    }
+                if (typeof currentCountryRecord !== "undefined" && currentCountryRecord !== null && currentCountryRecord[0] !== undefined) {
+                    nActiveCases = currentCountryRecord[0].activeCases;
+                    nTotalDeaths = currentCountryRecord[0].deaths;
+                    nTotalRecovered = currentCountryRecord[0].recovered;
                 }
+
+
+                data.push({
+                    id: id,
+                    color: chart.colors.getIndex(continents[country.continent_code]),
+                    map: country.maps[0],
+                    countryName: country.country,
+                    activeCases: nActiveCases,
+                    totalDeaths: nTotalDeaths,
+                    recovered: nTotalRecovered
+
+                });
             }
+        }
+    }
+            
 
             worldSeries.data = data;
 
@@ -125,5 +125,5 @@
             homeButton.marginBottom = 10;
             homeButton.parent = chart.zoomControl;
             homeButton.insertBefore(chart.zoomControl.plusButton);
-        });
+        
 }

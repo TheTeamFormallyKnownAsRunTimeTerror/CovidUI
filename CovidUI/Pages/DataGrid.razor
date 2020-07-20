@@ -23,7 +23,7 @@
 
 <Blazorise.DataGrid.DataGrid TItem="StaticCountryInformation"
           Data="@countryList"
-          ReadData="@OnReadData"
+          ReadData="@GetCountriesWithData"
           TotalItems="@totalCountries">
     <DataGridCommandColumn TItem="StaticCountryInformation" />
     <DataGridColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.CountryName)" Caption="Country" Sortable="false" />
@@ -40,7 +40,7 @@
 
             private async Task GetCountriesWithData()
             {
-                var countryInfoUrl = "http://localhost:5000/api/base";
+                var countryInfoUrl = "http://localhost:5000/api/Country/base";
                 var response = await Http.GetAsync(countryInfoUrl);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
