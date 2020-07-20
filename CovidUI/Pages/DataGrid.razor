@@ -1,0 +1,71 @@
+﻿@page "/data"
+@using Blazorise
+@using Blazorise.DataGrid
+@using Blazorise.DataGrid.Utils
+@using CovidUI.Responses
+@inject HttpClient Http
+
+
+
+
+
+<h3>Country Data</h3>
+
+<p>This page displays the common information about countries</p>
+
+
+@*<Blazorise.DataGrid.DataGrid TItem="StaticCountryInformation"
+          Data="@ListOfCountryInformation"
+          ReadData="@OnReadData"
+          TotalItems="@totalEmployees"
+          AggregateData="@employeeSummary">
+</Blazorise.DataGrid.DataGrid>*@
+
+<Blazorise.DataGrid.DataGrid TItem="StaticCountryInformation"
+          Data="@countryList"
+          ReadData="@OnReadData"
+          TotalItems="@totalCountries">
+    <DataGridCommandColumn TItem="StaticCountryInformation" />
+    <DataGridColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.CountryName)" Caption="Country" Sortable="false" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.Population)" Caption="Population" Editable="true" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.MedianAge)" Caption="MedianAge" Editable="true" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.LifeExpectancy)" Caption="LifeExpectancy" Editable="true" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.GdpPerCapita)" Caption="GdpPerCapita" Editable="true" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.HospitalBedsPerThousand)" Caption="HospitalBedsPerThousand" Editable="true" />
+    <DataGridNumericColumn TItem="StaticCountryInformation" Field="@nameof(StaticCountryInformation.DiabetesPrevalence)" Caption="DiabetesPrevalence" Editable="true" />
+</Blazorise.DataGrid.DataGrid>
+
+        @code {
+            private List<StaticCountryInformation> ListOfCountryInformation;
+
+            private async Task GetCountriesWithData()
+            {
+                var countryInfoUrl = "http://localhost:5000/api/base";
+                var response = await Http.GetAsync(countryInfoUrl);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                ListOfCountryInformation = System.Text.Json.JsonSerializer.Deserialize<List<StaticCountryInformation>>(responseContent); //TODO
+            }
+
+            StaticCountryInformation[] countryList;
+            List<StaticCountryInformation> CountrySummary;
+            int totalCountries;
+
+            async Task OnReadData(DataGridReadDataEventArgs<StaticCountryInformation> e)
+            {
+                var countryInfoUrl = "http://localhost:5000/api/country/base";
+                // this can be call to anything, in this case we're calling a fictional api
+                var response = await Http.GetAsync(countryInfoUrl);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                //var aggregateResponse = await Http.GetJsonAsync<Employee[]>( $"some-aggregate-api/employees" );
+
+                countryList = System.Text.Json.JsonSerializer.Deserialize<StaticCountryInformation[]>(responseContent); //TODO // an actual data for the current page
+                totalCountries = countryList.Length; //TODO // this is used to tell datagrid how many items are available so that pagination will work
+
+                //employeeSummary = aggregateResponse.Data;
+
+                // always call StateHasChanged!
+                StateHasChanged();
+            }
+        }

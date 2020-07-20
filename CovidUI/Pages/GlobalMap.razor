@@ -1,0 +1,32 @@
+﻿@page "/globalmap"
+@using System.Net
+@using CovidUI.Responses
+@inject HttpClient Http
+@inject IJSRuntime IJsRuntime;
+
+<h3>GlobalMap View</h3>
+
+<div id="chartdiv"></div>
+
+<button class="btn btn-primary" @onclick="GenerateMap">Generate Global View </button>
+
+@code {
+
+    private List<CountryData> CountryData { get; set; }
+
+    private async Task GenerateMap()
+    {
+        await GetCountriesWithData();
+        await IJsRuntime.InvokeVoidAsync("GenerateMap", CountryData);
+    }
+
+    private async Task GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://localhost:5000/api/Country/countries";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CountryData>>(responseContent); //TODO
+    }
+
+}
