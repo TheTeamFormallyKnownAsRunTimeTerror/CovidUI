@@ -1,0 +1,44 @@
+﻿@page "/Query"
+@inject HttpClient Http
+@using CovidUI.Responses
+@using Syncfusion.Blazor.QueryBuilder;
+
+<h3>QueryBuilder</h3>
+<SfButton CssClass="e-primary" @onclick=GetCountryStaticInformation>Get Data</SfButton>
+<SfQueryBuilder DataSource="@ListOfCountryInfo" @ref="QueryBuilderObj">
+    @*<QueryBuilderColumns>
+           <QueryBuilderColumn Field="CountryName" Label="Country Name" Type="string"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="Population" Label="Population" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="PopulationDensity" Label="Population Density" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="MedianAge" Label="Median Age" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="Aged65Older" Label="Aged 65 Or Older" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="Aged70Older" Label="Aged 70 Or Older" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="GdpPerCapita" Label="Gdp Per Capita" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="DiabetesPrevalence" Label="Diabetes Prevalence" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="HandwashingFacilities" Label="Handwashing Facilities" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="HospitalBedsPerThousand" Label="Hospital Beds Per Thousand" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="LifeExpectancy" Label="Life Expectancy" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="ActiveCases" Label="Active Cases" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="ConfirmedCases" Label="Confirmed Cases" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="Deaths" Label="Deaths" Type="number"></QueryBuilderColumn>
+           <QueryBuilderColumn Field="Recovered" Label="Recovered" Type="number"></QueryBuilderColumn>
+        </QueryBuilderColumns>*@
+</SfQueryBuilder>
+<SfButton CssClass="e-primary" @onclick=GetCountryStaticInformation>Get Data! </SfButton>
+
+
+@code {
+    SfQueryBuilder QueryBuilderObj;
+    List<StaticCountryInformation> ListOfCountryInfo;
+
+    private async Task GetCountryStaticInformation()
+    {
+        var countryInfoUrl = "http://localhost:5000/api/Country/base";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        ListOfCountryInfo = System.Text.Json.JsonSerializer.Deserialize<List<StaticCountryInformation>>(responseContent);
+        QueryBuilderObj.DataSource = ListOfCountryInfo;
+        Console.WriteLine($"{ListOfCountryInfo.Count} Countries with Data");
+    }
+}
