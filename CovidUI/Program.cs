@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
+using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor;
+
 
 namespace CovidUI
 {
@@ -24,6 +26,8 @@ namespace CovidUI
 
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddSyncfusionBlazor();
+
+            //builder.Services.AddSingleton<IBackgroundDataService, BackgroundDataService>();
 
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MjkwODA2QDMxMzgyZTMyMmUzMGJKcDJCOEJGVm5zTERQVTRsa0ovNndNRWF6UWtmMmtaNWVXbWxTV21udGM9;MjkwODA3QDMxMzgyZTMyMmUzMEtQU1lGWGRiVzVUbGUyZ3dhMGtOSll5a2REbFNBK3ViYzZpaXVxUE40aWM9;MjkwODA4QDMxMzgyZTMyMmUzMEFmajRHenVyemV6cmV2UjRxUDB6Y0lrS0NBWDRaZmJpenkyZXZoZzlRV2M9");
 

@@ -1,0 +1,113 @@
+﻿@page "/covidquery"
+@using Syncfusion.Blazor.QueryBuilder
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor
+@using CovidUI.Responses
+@using Newtonsoft.Json.Linq;
+@inject HttpClient Http
+<div class="col-lg-12 control-section">
+    <SfQueryBuilder @ref="Querybuilder" DataSource="@GridData">
+        <QueryBuilderRule Condition="or" Rules="@ImportRules"></QueryBuilderRule>
+        <QueryBuilderEvents RuleChanged="UpdateRule"></QueryBuilderEvents>
+        <QueryBuilderColumns>
+            <QueryBuilderColumn Field="CountryName" Label="Country Name" Type="string"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="Population" Label="Population" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="PopulationDensity" Label="Population Density" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="MedianAge" Label="Median Age" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="Aged65Older" Label="Aged 65 Or Older" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="Aged70Older" Label="Aged 70 Or Older" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="GdpPerCapita" Label="Gdp Per Capita" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="DiabetesPrevalence" Label="Diabetes Prevalence" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="HandwashingFacilities" Label="Handwashing Facilities" Type="number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="HospitalBedsPerThousand" Label="Hospital Beds Per Thousand" Type="number"></QueryBuilderColumn>
+        </QueryBuilderColumns>
+    </SfQueryBuilder>
+</div>
+<div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <div class="row">
+            <SfGrid DataSource="@GridData" AllowPaging="true">
+                <GridEvents Created="Created" TValue="StaticCountryInformation"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.CountryName) HeaderText="Country Name" TextAlign="TextAlign.Right" Width="120"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.Population) HeaderText="Population" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.PopulationDensity) HeaderText="Population Density" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.MedianAge) HeaderText="Median Age" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.LifeExpectancy) HeaderText="Life Expectancy" TextAlign="TextAlign.Right" Width="120"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.Aged65Older) HeaderText="Aged Over 65" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.Aged70Older) HeaderText="Aged Over 75" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.GdpPerCapita) HeaderText="GDP Per Capita (normalized)" TextAlign="TextAlign.Right" Width="140"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.DiabetesPrevalence) HeaderText="Diabetes Prevalance" TextAlign="TextAlign.Right" Width="120"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.HandwashingFacilities) HeaderText="Handwashing Facilities" TextAlign="TextAlign.Right" Width="120"></GridColumn>
+                    <GridColumn Field=@nameof(Responses.StaticCountryInformation.HospitalBedsPerThousand) HeaderText="Hospital Beds Per Thousand" TextAlign="TextAlign.Right" Width="140"></GridColumn>
+
+
+
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+@code{
+    SfQueryBuilder Querybuilder;
+    public IEnumerable<StaticCountryInformation> GridData { get; set; }
+    public IEnumerable<StaticCountryInformation> FilterData { get; set; }
+    private List<StaticCountryInformation> CountryData { get; set; }
+    public Object QueryData;
+    public WhereData FilterQuery;
+    public RuleModel GetRule { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCountriesWithData();
+        GridData = CountryData;
+        FilterData = CountryData;
+    }
+
+    private async Task GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://localhost:80/api/Country/base";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<StaticCountryInformation>>(responseContent); //TODO
+
+    }
+    private async void Created()
+    {
+        RuleModel Rule = new RuleModel()
+        {
+            Condition = "or",
+            Rules = new List<RuleModel> {
+            new RuleModel { Field = "CountryName", Value = "Ireland", Operator = "equal"  } },
+        };
+        this.GetRule = await Querybuilder.GetValidRules(Rule);
+        this.UpdateRule(new RuleChangeEventArgs() { Name = "", PreviousRule = null, Type = "", Rule = this.GetRule });
+    }
+    public List<RuleModel> ImportRules = new List<RuleModel>
+{
+        new RuleModel { Field = "CountryName", Value = "Ireland", Operator = "equal" }
+    };
+    private async void UpdateRule(RuleChangeEventArgs args)
+    {
+        this.QueryData = await Querybuilder.GetFilteredRecords();
+        if (this.QueryData != null)
+        {
+            this.FilterQuery = ((JObject)this.QueryData).ToObject<WhereData>();
+            if (this.FilterQuery.Where != null && this.FilterQuery.Where.Count > 0)
+            {
+                this.GridData = DataOperations.PerformFiltering(this.FilterData, this.FilterQuery.Where, this.FilterQuery.Where[0].Operator).AsEnumerable();
+            }
+            this.StateHasChanged();
+        }
+        else
+        {
+            this.GridData = this.FilterData;
+            this.StateHasChanged();
+        }
+    }
+    public class WhereData
+    {
+        public List<WhereFilter> Where { get; set; }
+    }
+}
