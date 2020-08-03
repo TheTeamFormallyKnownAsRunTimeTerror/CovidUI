@@ -1,0 +1,166 @@
+﻿@page "/charts"
+@using CovidUI.Responses
+@using Syncfusion.Blazor.Charts
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+    <SfAccumulationChart Title="Top 10 Deaths">
+        <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+        <AccumulationChartEvents Loaded="@FilterTop10Deaths"></AccumulationChartEvents>
+
+        <AccumulationChartSeriesCollection>
+            <AccumulationChartSeries DataSource="@ChartDataDeaths" XName="CountryName" YName="DataPoint" Name="Text">
+                <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
+            </AccumulationChartSeries>
+        </AccumulationChartSeriesCollection>
+    </SfAccumulationChart>
+
+<SfAccumulationChart Title="Top 10 Active">
+    <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+
+    <AccumulationChartSeriesCollection>
+        <AccumulationChartSeries DataSource="@ChartDataActive" XName="CountryName" YName="DataPoint" Name="Text">
+            <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
+        </AccumulationChartSeries>
+    </AccumulationChartSeriesCollection>
+</SfAccumulationChart>
+
+<SfAccumulationChart Title="Top 10 Confirmed">
+    <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+
+    <AccumulationChartSeriesCollection>
+        <AccumulationChartSeries DataSource="@ChartDataConfirmed" XName="CountryName" YName="DataPoint" Name="Text">
+            <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
+        </AccumulationChartSeries>
+    </AccumulationChartSeriesCollection>
+</SfAccumulationChart>
+
+<SfAccumulationChart Title="Top 10 Recovered">
+    <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+
+    <AccumulationChartSeriesCollection>
+        <AccumulationChartSeries DataSource="@ChartDataRecovered" XName="CountryName" YName="DataPoint" Name="Text">
+            <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
+        </AccumulationChartSeries>
+    </AccumulationChartSeriesCollection>
+</SfAccumulationChart>
+
+@code{
+
+    public List<CombinedCountryInformation> CountryData;
+    public List<ChartDataPoints> ChartDataDeaths;
+    public List<ChartDataPoints> ChartDataActive;
+    public List<ChartDataPoints> ChartDataConfirmed;
+    public List<ChartDataPoints> ChartDataRecovered;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CountryData = new List<CombinedCountryInformation>();
+        ChartDataDeaths = new List<ChartDataPoints>();
+        ChartDataActive = new List<ChartDataPoints>();
+        ChartDataConfirmed = new List<ChartDataPoints>();
+        ChartDataRecovered = new List<ChartDataPoints>();
+        await GetCountriesWithData();
+    }
+
+    private async Task GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://localhost:80/api/Country/combined";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CombinedCountryInformation>>(responseContent); //TODO
+        await FilterTop10Active();
+        await FilterTop10Confirmed();
+        await FilterTop10Recovered();
+        await FilterTop10Deaths();
+
+    }
+
+    private async Task FilterTop10Deaths()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Deaths descending
+                     select q).Take(10).ToList();
+
+        var totalDeaths = top10.Sum(x => x.Deaths);
+        foreach (var countryData in top10)
+        {
+            var dataPoint = new ChartDataPoints
+            {
+                CountryName = countryData.CountryName,
+                DataPoint = countryData.Deaths,
+                Text = (totalDeaths / countryData.Deaths).ToString()
+            };
+
+            ChartDataDeaths.Add(dataPoint);
+        }
+    }
+
+    private async Task FilterTop10Active()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Active descending
+                     select q).Take(10).ToList();
+
+        var totalActive = top10.Sum(x => x.Active);
+        foreach (var countryData in top10)
+        {
+            var dataPoint = new ChartDataPoints
+            {
+                CountryName = countryData.CountryName,
+                DataPoint = countryData.Active,
+                Text = (totalActive / countryData.Active).ToString()
+            };
+
+            ChartDataActive.Add(dataPoint);
+        }
+    }
+
+    private async Task FilterTop10Confirmed()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Confirmed descending
+                     select q).Take(10).ToList();
+
+        var totalConfirmed = top10.Sum(x => x.Confirmed);
+        foreach (var countryData in top10)
+        {
+            var dataPoint = new ChartDataPoints
+            {
+                CountryName = countryData.CountryName,
+                DataPoint = countryData.Confirmed,
+                Text = (totalConfirmed / countryData.Confirmed).ToString()
+            };
+
+            ChartDataConfirmed.Add(dataPoint);
+        }
+    }
+
+    private async Task FilterTop10Recovered()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Recovered descending
+                     select q).Take(10).ToList();
+
+        var totalConfirmed = top10.Sum(x => x.Recovered);
+        foreach (var countryData in top10)
+        {
+            var dataPoint = new ChartDataPoints
+            {
+                CountryName = countryData.CountryName,
+                DataPoint = countryData.Recovered,
+                Text = (totalConfirmed / countryData.Recovered).ToString()
+            };
+
+            ChartDataRecovered.Add(dataPoint);
+        }
+    }
+
+    public class ChartDataPoints
+    {
+        public string CountryName { get; set; }
+        public int DataPoint { get; set; }
+        public string Text { get; set; }
+    }
+}

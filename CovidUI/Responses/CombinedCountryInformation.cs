@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CovidUI.Responses
 {
-    public class StaticCountryInformation
+    public class CombinedCountryInformation
     {
         [JsonPropertyName("countryName")]
         public string CountryName { get; set; }
@@ -32,5 +32,13 @@ namespace CovidUI.Responses
         public double HospitalBedsPerThousand { get; set; }
         [JsonPropertyName("lifeExpectancy")]
         public double LifeExpectancy { get; set; }
+        [JsonPropertyName("activeCases")]
+        public int Active { get; set; }
+        [JsonPropertyName("confirmedCases")]
+        public int Confirmed { get; set; }
+        [JsonPropertyName("deaths")]
+        public int Deaths { get; set; }
+        [JsonPropertyName("recovered")]
+        public int Recovered { get; set; }
     }
 }
