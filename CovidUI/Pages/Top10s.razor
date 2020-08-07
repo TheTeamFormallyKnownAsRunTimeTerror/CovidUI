@@ -1,186 +1,71 @@
-﻿@page "/chart/pie"
+﻿@page "/column"
 @using CovidUI.Responses
 @using Syncfusion.Blazor.Charts
-@inject NavigationManager NavigationManager
 @inject HttpClient Http
 
-<div class="row">
-    <div class="col-lg-8 control-section">
-        <div class="control-section">
-            <SfAccumulationChart Title="Mobile Browser Statistics" EnableAnimation="false">
-                <AccumulationChartEvents Load="BeforeRender" />
-                <AccumulationChartTooltipSettings Enable="true"></AccumulationChartTooltipSettings>
-                <AccumulationChartLegendSettings Visible="false"></AccumulationChartLegendSettings>
-                <AccumulationChartSeriesCollection>
-                    <AccumulationChartSeries DataSource="@dataSource" XName="xValue" YName="yValue" Name="Browser" Radius="@OuterRadius" StartAngle="@StartAngle" EndAngle="@EndAngle"
-                                             InnerRadius="0%" ExplodeIndex="@ExplodeIndex" Explode="true" ExplodeOffset="@ExplodeRadius">
-                        <AccumulationDataLabelSettings Visible="true" Name="xValue" Position="AccumulationLabelPosition.Outside"></AccumulationDataLabelSettings>
-                    </AccumulationChartSeries>
-                </AccumulationChartSeriesCollection>
-            </SfAccumulationChart>
-        </div>
-    </div>
-    <div class="col-lg-4 property-section">
-        <table title="Properties" style="width: 100%">
-            <tr style="height:50px"><th>Properties</th></tr>
-            <tr style="height: 50px">
-                <td style="width: 50%">
-                    <div>
-                        Pie Angle:
-                    </div>
-                </td>
-                <td style="width: 70%;">
-                    <div class="">
-                        <input type="range" @onchange="changeAngle" value="@value" min="0" max="360" style="width:90%" />
-                    </div>
-                </td>
-                <td style="width: 30%">
-                    <p style="font-weight: normal;"><span>@value</span></p>
-                </td>
-            </tr>
-            <tr style="height: 50px">
-                <td style="width: 50%">
-                    <div>
-                        Outer Radius:
-                    </div>
-                </td>
-                <td style="width: 50%;">
-                    <div data-role="rangeslider">
-                        <input type="range" @onchange="ChangeOuterRadius" value="@radiusValue" min="0" max="80" style="width:90%" />
-                    </div>
-                </td>
-                <td style="width: 30%">
-                    <p style="font-weight: normal;"><span>@radiusValue</span></p>
-                </td>
-            </tr>
-            <tr style="height: 50px">
-                <td style="width: 50%">
-                    <div>
-                        Explode Radius:
-                    </div>
-                </td>
-                <td style="width: 50%;">
-                    <div data-role="rangeslider">
-                        <input type="range" @onchange="ChangeExplodeRadius" value="@exploderadius" min="0" max="40" style="width:90%" />
-                    </div>
-                </td>
-                <td style="width: 30%">
-                    <p style="font-weight: normal;"><span>@exploderadius</span></p>
-                </td>
-            </tr>
-            <tr style="height: 50px">
-                <td style="width: 50%">
-                    <div>
-                        Explode Index:
-                    </div>
-                </td>
-                <td style="width: 50%;">
-                    <div data-role="rangeslider">
-                        <input type="range" @onchange="ChangeExplodeIndex" value="@ExplodeIndex" min="0" max="6" style="width:90%" />
-                    </div>
-                </td>
-                <td style="width: 30%">
-                    <p style="font-weight: normal;"><span>@ExplodeIndex</span></p>
-                </td>
-            </tr>
-        </table>
-    </div>
-</div>
+
+    <SfChart>
+        <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+        @*<ChartEvents Loaded="@OnInitializedAsync"></ChartEvents>*@
+        @*<ChartEvents OnPrint="@OnInitializedAsync"></ChartEvents>*@
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@ChartDataList" Name="Active" XName="Country" Width="2" Opacity="1" YName="Active" Type="ChartSeriesType.Column">
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartDataList" Name="Deaths" XName="Country" Width="2" Opacity="1" YName="Deaths" Type="ChartSeriesType.Column">
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartDataList" Name="Recovered" XName="Country" Width="2" Opacity="1" YName="Recovered" Type="ChartSeriesType.Column">
+            </ChartSeries>
+        </ChartSeriesCollection>
+    </SfChart>
+
 @code{
 
-    public List<PieData1> dataSource { get; set; }
+    private List<CombinedCountryInformation> CountryData { get; set; }
+    private List<ChartData> ChartDataList { get; set; }
 
-    //protected override async Task OnInitializedAsync()
-    //{
-    //    dataSource = new List<PieData1>();
-    //    await GetCountriesWithData();
-
-    //}
-
-    //protected override async void OnAfterRender(bool firstRender)
-    //{
-    //    if (firstRender)
-    //    {
-    //        await GetCountriesWithData();
-    //    }
-    //}
-    public int StartAngle = 0, value = 0, EndAngle = 360, radiusValue = 70, exploderadius = 10;
-    public double ExplodeIndex = 1;
-    public string OuterRadius = "70%", ExplodeRadius = "10%";
-    private void changeAngle(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    public class ChartData
     {
-        value = Convert.ToInt32(args.Value);
-        StartAngle = +Convert.ToInt32(args.Value);
-        EndAngle = +Convert.ToInt32(args.Value);
-    }
-    private void ChangeOuterRadius(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-    {
-        radiusValue = Convert.ToInt32(args.Value);
-        OuterRadius = args.Value + "%";
-    }
-    private void ChangeExplodeRadius(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-    {
-        exploderadius = Convert.ToInt32(args.Value);
-        ExplodeRadius = args.Value + "%";
-    }
-    private void ChangeExplodeIndex(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-    {
-        ExplodeIndex = Convert.ToInt32(args.Value);
-    }
-    public class PieData1
-    {
-        public string xValue { get; set; }
-        public double yValue { get; set; }
-        public string r { get; set; }
+        public string Country;
+        public double Deaths;
+        public double Active;
+        public double Recovered;
     }
 
-    string CurrentUri;
-    async void BeforeRender(IAccLoadedEventArgs Args)
+    protected override async Task OnInitializedAsync()
     {
-        dataSource = new List<PieData1>();
+        CountryData = new List<CombinedCountryInformation>();
+        ChartDataList = new List<ChartData>();
         await GetCountriesWithData();
-        CurrentUri = NavigationManager.Uri;
-        if (CurrentUri.IndexOf("material") > -1)
-        {
-            Args.Theme = AccumulationTheme.Material;
-        }
-        else if (CurrentUri.IndexOf("fabric") > -1)
-        {
-            Args.Theme = AccumulationTheme.Fabric;
-        }
-        else if (CurrentUri.IndexOf("bootstrap") > -1)
-        {
-            Args.Theme = AccumulationTheme.Bootstrap;
-        }
-        else if (CurrentUri.IndexOf("highcontrast") > -1)
-        {
-            Args.Theme = AccumulationTheme.HighContrast;
-        }
-        else
-        {
-            Args.Theme = AccumulationTheme.Bootstrap4;
-        }
     }
 
     private async Task GetCountriesWithData()
     {
-        var countryInfoUrl = "http://localhost:80/api/Country/countries";
+        var countryInfoUrl = "http://localhost:80/api/Country/combined";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 
-        var results = System.Text.Json.JsonSerializer.Deserialize<List<CountryData>>(responseContent); //TODO
-        var list = (from t in results
-                    orderby t.Deaths
-                    select t).Take(10);
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CombinedCountryInformation>>(responseContent); //TODO
+        await FilterTop10Confirmed();
+    }
 
-        foreach (var country in list)
+    private async Task FilterTop10Confirmed()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Confirmed descending
+                     select q).Take(10).ToList();
+
+        var totalActive = top10.Sum(x => x.Confirmed);
+        foreach (var countryData in top10)
         {
-            dataSource.Add(new PieData1
+            var dataPoint = new ChartData
             {
-                xValue = country.CountryName,
-                yValue = country.Deaths
+                Country = countryData.CountryName,
+                Active = countryData.Active,
+                Deaths = countryData.Deaths,
+                Recovered = countryData.Recovered
+            };
 
-            });
+            ChartDataList.Add(dataPoint);
         }
     }
 }
