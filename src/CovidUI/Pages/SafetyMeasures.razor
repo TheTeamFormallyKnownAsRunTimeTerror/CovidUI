@@ -1,9 +1,13 @@
 ﻿@page "/safety"
 @using System.Threading
+@using CovidUI.Extensions
 @using CovidUI.Responses
+@using Syncfusion.Blazor.DropDowns
 @using Syncfusion.Blazor.Charts
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
+
+
 
 <SfAccumulationChart Title="Measures Impact" EnableSmartLabels="true">
     <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
@@ -18,19 +22,31 @@
 @code{
 
     public CountrySafetyMeasures CountrySafetyMeasures;
-    public List<CountrySafetyMeasures> ListOfCountrySafetyMeasures;
     public List<Measures> ListOfMeasures;
+    public string countryCode = "IE";
 
-    protected override async Task OnInitializedAsync()
+    protected override async void OnInitialized()
     {
+        GetQueryStringValues();
+        NavigationManager.LocationChanged += HandleLocationChanged;
         CountrySafetyMeasures = new CountrySafetyMeasures();
         ListOfMeasures = new List<Measures>();
-        await GetCountrySafetyData("GB");
-        //CreateDefaultChartData();
+        await GetCountrySafetyData(countryCode);
         Thread.Sleep(5000);
     }
 
-    private async Task GetCountrySafetyData(string countryCode)
+
+    void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        GetQueryStringValues();
+        StateHasChanged();
+    }
+
+    void GetQueryStringValues()
+    {
+        NavigationManager.TryGetQueryString<string>("countryCode", out countryCode);
+    }
+    private async Task GetCountrySafetyData(string countryCode = "IE")
     {
         var countryInfoUrl = $"http://localhost:8080/api/Country/stats/{countryCode}";
         var response = await Http.GetAsync(countryInfoUrl);
@@ -39,6 +55,11 @@
         CountrySafetyMeasures = System.Text.Json.JsonSerializer.Deserialize<CountrySafetyMeasures>(responseContent);
 
         ConvertMeasures(CountrySafetyMeasures);
+    }
+    public class Measures
+    {
+        public string MeasureName { get; set; }
+        public decimal MeasureImpact { get; set; }
     }
 
     private void ConvertMeasures(CountrySafetyMeasures countryData)
@@ -57,13 +78,6 @@
             Console.WriteLine($"{measure.Key}");
             Console.WriteLine($"{measure.Value}");
         }
-    }
-
-
-    public class Measures
-    {
-        public string MeasureName { get; set; }
-        public decimal MeasureImpact { get; set; }
     }
 
 }

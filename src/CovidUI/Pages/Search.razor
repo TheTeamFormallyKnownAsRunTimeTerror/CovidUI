@@ -1,0 +1,52 @@
+﻿@page "/search"
+@using System.Threading
+@using CovidUI.Responses
+@using Syncfusion.Blazor.DropDowns
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Search</h3>
+
+<p>Current Country:<strong>@DropVal</strong></p>
+
+<SfDropDownList TValue="string" Placeholder="e.g. Australia" TItem="Countries" Value="@DropVal" DataSource="@Country">
+    <DropDownListEvents TValue="string" ValueChange="onChange"></DropDownListEvents>
+    <DropDownListFieldSettings Value="Name"></DropDownListFieldSettings>
+</SfDropDownList>
+
+<button class="btn btn-primary" @onclick="Redirect"> Check @DropVal's Safety Measures</button>
+@code {
+    #region Drop Down
+    public class Countries
+    {
+        public string Name { get; set; }
+
+        public string Code { get; set; }
+    }
+
+    public string DropVal;
+
+
+    private void onChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+    {
+        DropVal = args.Value;
+        StateHasChanged();
+    }
+
+    List<Countries> Country = new List<Countries>
+{
+        new Countries() { Name = "United Kingdon", Code = "GB" },
+        new Countries() { Name = "Ireland", Code = "IE" },
+    };
+    #endregion
+
+    public void Redirect()
+    {
+        var country = Country.FirstOrDefault(x => x.Name == DropVal);
+        Navigate(country.Code.ToUpper());
+    }
+    void Navigate(string countrycode)
+    {
+        NavigationManager.NavigateTo($"/safety?countryCode={countrycode}");
+    }
+}
