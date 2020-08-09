@@ -44,7 +44,7 @@
 
     private async Task GetCountriesWithData()
     {
-        var countryInfoUrl = "http://localhost:80/api/Country/countries";
+        var countryInfoUrl = "http://18.203.153.44:80/api/Country/countries";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 

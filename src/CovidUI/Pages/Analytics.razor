@@ -37,7 +37,7 @@
     private async Task FetchHistoricCountryData()
     {
 
-        var response = await Http.GetAsync(new Uri("http://localhost:80/api/Country/historic/IE"));
+        var response = await Http.GetAsync(new Uri("http://18.203.153.44:80/api/Country/historic/IE"));
         var responseContent = await response.Content.ReadAsStringAsync();
         historicData = System.Text.Json.JsonSerializer.Deserialize<List<HistoricCountryData>>(responseContent);
 
