@@ -1,60 +1,84 @@
 ﻿@page "/analytics"
-@using System.Net.Http
+@using System.Threading
 @using CovidUI.Responses
-@inject HttpClient Http  
+@using Syncfusion.Blazor.DropDowns
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
 
-<h1>Analytics</h1>
+<h3>Get Historical Data</h3>
 
-<p>Historic Irish trend</p>
+<p>Current Country:<strong>@DropVal</strong></p>
 
+<SfDropDownList TValue="string" Placeholder="e.g. Australia" TItem="Countries" Value="@DropVal" DataSource="@Country">
+    <DropDownListEvents TValue="string" ValueChange="onChange"></DropDownListEvents>
+    <DropDownListFieldSettings Value="Name"></DropDownListFieldSettings>
+</SfDropDownList>
 
-<LineChart @ref="lineChart" TItem="int" />
-
-
+<button class="btn btn-primary" @onclick="Redirect"> Check @DropVal's Historical Data</button>
 @code {
-    LineChart<int> lineChart;
-    List<HistoricCountryData> historicData;
-
-    List<string> Labels = new List<string>() { "test1", "test2", "test3" };
-
-    List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 0.2f), ChartColor.FromRgba(54, 162, 235, 0.2f), ChartColor.FromRgba(255, 206, 86, 0.2f), ChartColor.FromRgba(75, 192, 192, 0.2f), ChartColor.FromRgba(153, 102, 255, 0.2f), ChartColor.FromRgba(255, 159, 64, 0.2f) };
-    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    #region Drop Down
+    List<CountryData> CountryData;
+    List<Countries> Country;
+    public class Countries
     {
-        if(firstRender)
-        {
-            await FetchHistoricCountryData();
-            await lineChart.Clear();
-            await lineChart.AddDataSet(GetChartDataSet());
+        public string Name { get; set; }
 
-            historicData.ForEach(hd => lineChart.AddLabel(hd.Date.ToString()));
-
-            await lineChart.Update();
-        }
+        public string Code { get; set; }
     }
 
-    private async Task FetchHistoricCountryData()
-    {
+    public string DropVal;
 
-        var response = await Http.GetAsync(new Uri("http://18.203.153.44:80/api/Country/historic/IE"));
+    protected override async Task OnInitializedAsync()
+    {
+        CountryData = new List<CountryData>();
+        Country = new List<Countries>();
+        await GetCountriesWithData();
+        Thread.Sleep(1000);
+    }
+
+    private void onChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+    {
+        DropVal = args.Value;
+        StateHasChanged();
+    }
+
+    private async Task GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://54.76.66.207:80/api/Country/countries";
+        var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
-        historicData = System.Text.Json.JsonSerializer.Deserialize<List<HistoricCountryData>>(responseContent);
 
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CountryData>>(responseContent); //TODO
+        Console.WriteLine($"Counties: {CountryData.Count}");
+
+        await CreateDropDownItems();
     }
 
-    private LineChartDataset<int> GetChartDataSet()
+    private async Task CreateDropDownItems()
     {
-        return new LineChartDataset<int>()
+        foreach (var country in CountryData)
         {
-            Label = "Active cases",
-            Data = historicData.Select(hd => hd.Active).ToList(),
-            BackgroundColor = backgroundColors,
-            BorderColor = borderColors,
-            Fill = true,
-            PointRadius = 2,
-            BorderDash = new List<int>()
+            Country.Add(new Countries
+            {
+                Name = country.CountryName,
+                Code = country.CountryCode
+            });
+        }
+        Console.WriteLine($"Counties: {Country.Count}");
+    }
+    #endregion
 
-        };
+    public void Redirect()
+    {
+        var country = Country.FirstOrDefault(x => x.Name == DropVal);
+        Navigate(country.Code.ToUpper());
+    }
+    void Navigate(string countrycode)
+    {
+        var uri = $"/historic?countryCode={countrycode}";
+        Thread.Sleep(300);
+        jsRuntime.InvokeAsync<object>("open", uri+"", "_blank");
+        StateHasChanged();
     }
 }

@@ -1,4 +1,5 @@
 ﻿@page "/column"
+@using System.Threading
 @using CovidUI.Responses
 @using Syncfusion.Blazor.Charts
 @inject HttpClient Http
@@ -6,8 +7,6 @@
 
     <SfChart>
         <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
-        @*<ChartEvents Loaded="@OnInitializedAsync"></ChartEvents>*@
-        @*<ChartEvents OnPrint="@OnInitializedAsync"></ChartEvents>*@
         <ChartSeriesCollection>
             <ChartSeries DataSource="@ChartDataList" Name="Active" XName="Country" Width="2" Opacity="1" YName="Active" Type="ChartSeriesType.Column">
             </ChartSeries>
@@ -36,11 +35,12 @@
         CountryData = new List<CombinedCountryInformation>();
         ChartDataList = new List<ChartData>();
         await GetCountriesWithData();
+        Thread.Sleep(1000);
     }
 
     private async Task GetCountriesWithData()
     {
-        var countryInfoUrl = "http://18.203.153.44:80/api/Country/combined";
+        var countryInfoUrl = "http://54.76.66.207:80/api/Country/combined";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 

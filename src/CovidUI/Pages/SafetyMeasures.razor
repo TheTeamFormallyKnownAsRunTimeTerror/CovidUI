@@ -32,7 +32,7 @@
         CountrySafetyMeasures = new CountrySafetyMeasures();
         ListOfMeasures = new List<Measures>();
         await GetCountrySafetyData(countryCode);
-        Thread.Sleep(5000);
+        Thread.Sleep(1000);
     }
 
 
@@ -48,7 +48,7 @@
     }
     private async Task GetCountrySafetyData(string countryCode = "IE")
     {
-        var countryInfoUrl = $"http://localhost:8080/api/Country/stats/{countryCode}";
+        var countryInfoUrl = $"http://54.76.66.207:80/api/Country/stats/{countryCode}";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 

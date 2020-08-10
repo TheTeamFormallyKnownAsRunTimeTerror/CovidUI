@@ -1,0 +1,143 @@
+﻿@page "/historic"
+@using System.Net
+@using System.Threading
+@using CovidUI.Responses
+@using Syncfusion.Blazor.Charts
+@using CovidUI.Extensions
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+
+    <div class="control-section">
+        <SfChart Title="Covid Trend Data">
+            <ChartEvents Load="ChartLoad" />
+            <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" LabelFormat="y" IntervalType="IntervalType.Days"   EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+                <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+            </ChartPrimaryXAxis>
+            <ChartPrimaryYAxis LabelFormat="{value}" RangePadding="ChartRangePadding.None" Minimum="0" Maximum="@MaxConfirmed" Interval="@interval">
+                <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+                <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+            </ChartPrimaryYAxis>
+            <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@ChartData" Name="Active" XName="xValue" Width="1"
+                             Opacity="1" YName="Active" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true" Width="1" Height="1">
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries DataSource="@ChartData" Name="Confirmed" XName="xValue" Width="1"
+                             Opacity="1" YName="Confirmed" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true" Width="1" Height="1">
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries DataSource="@ChartData" Name="Deaths" XName="xValue" Width="1"
+                             Opacity="1" YName="Deaths" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true" Width="1" Height="1">
+                    </ChartMarker>
+                </ChartSeries>
+            </ChartSeriesCollection>
+        </SfChart>
+    </div>
+    @code{
+        private string CurrentUri;
+        List<HistoricCountryData> HistoricData;
+        List<LineChartData> ChartData;
+        int MaxActive = 0;
+        int MaxDeaths = 0;
+        int MaxConfirmed = 0;
+        int interval = 0;
+
+        public string countryCode = "IE";
+
+
+        protected override async Task OnInitializedAsync()
+        {
+            HistoricData = new List<HistoricCountryData>();
+            ChartData = new List<LineChartData>();
+            GetQueryStringValues();
+            NavigationManager.LocationChanged += HandleLocationChanged;
+            await FetchHistoricCountryData(countryCode);
+            Thread.Sleep(1500);
+        }
+
+        void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+        {
+            GetQueryStringValues();
+            StateHasChanged();
+        }
+
+        void GetQueryStringValues()
+        {
+            NavigationManager.TryGetQueryString<string>("countryCode", out countryCode);
+        }
+
+        public class LineChartData
+        {
+            public DateTime xValue { get; set; }
+            public double Confirmed { get; set; }
+            public double Deaths { get; set; }
+            public double Active { get; set; }
+        }
+
+        void ChartLoad(ILoadedEventArgs Args)
+        {
+            CurrentUri = NavigationManager.Uri;
+            if (CurrentUri.IndexOf("material") > -1)
+            {
+                Args.Theme = ChartTheme.Material;
+            }
+            else if (CurrentUri.IndexOf("fabric") > -1)
+            {
+                Args.Theme = ChartTheme.Fabric;
+            }
+            else if (CurrentUri.IndexOf("bootstrap") > -1)
+            {
+                Args.Theme = ChartTheme.Bootstrap;
+            }
+            else if (CurrentUri.IndexOf("highcontrast") > -1)
+            {
+                Args.Theme = ChartTheme.HighContrast;
+            }
+            else
+            {
+                Args.Theme = ChartTheme.Bootstrap4;
+            }
+        }
+
+        private async Task FetchHistoricCountryData(string countrycode = "IE")
+        {
+
+            var countryInfoUrl = $"http://54.76.66.207:80/api/Country/historic/{countryCode}";
+            var response = await Http.GetAsync(countryInfoUrl);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            HistoricData = System.Text.Json.JsonSerializer.Deserialize<List<HistoricCountryData>>(responseContent);
+            await FormatChartData();
+        }
+
+        public async Task FormatChartData()
+        {
+            MaxActive = HistoricData.Max(x => x.Active);
+            MaxDeaths = HistoricData.Max(x => x.Deaths);
+            MaxConfirmed = HistoricData.Max(x => x.Confirmed);
+            interval = MaxConfirmed / 30;
+
+            foreach (var day in HistoricData)
+            {
+                ChartData.Add(new LineChartData
+                {
+                    xValue = day.Date,
+                    Active = day.Active,
+                    Confirmed = day.Confirmed,
+                    Deaths = day.Deaths
+                });
+            }
+        }
+
+        public class MaxValues
+        {
+            public int MaxActive { get; set; }
+            public int MaxDeath { get; set; }
+            public int MaxRecovered { get; set; }
+        }
+    }

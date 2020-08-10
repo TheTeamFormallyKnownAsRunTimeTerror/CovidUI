@@ -1,11 +1,24 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Threading
+@using Microsoft.AspNetCore.Http.Extensions
+@using Syncfusion.Blazor.SplitButtons
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
+
 
 <div class="sidebar">
     <NavMenu />
 </div>
 
 <div class="main">
+
     <div class="top-row px-4">
+        <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+            <SfProgressButton Content="RefreshPage" EnableProgress="true" CssClass="e-flat e-success" @onclick="Redirect">
+                <ProgressButtonSpinSettings Position="SpinPosition.Center"></ProgressButtonSpinSettings>
+                <ProgressButtonAnimationSettings Effect="AnimationEffect.SlideLeft"></ProgressButtonAnimationSettings>
+            </SfProgressButton>
+        </div>
         <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
     </div>
 
@@ -13,3 +26,17 @@
         @Body
     </div>
 </div>
+
+@code
+{
+
+    public async void Redirect()
+    {
+        var uri = NavigationManager.Uri;
+        var path = NavigationManager.ToBaseRelativePath(uri);
+        NavigationManager.NavigateTo($"/{path}");
+        await jsRuntime.InvokeAsync<object>("open", uri, "_blank");
+        StateHasChanged();
+    }
+
+}

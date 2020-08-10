@@ -9,13 +9,6 @@
 @inject HttpClient Http
 <div class="col-lg-12 control-section">
 
-    <h3>Search your country here and paste it into the query builder </h3>
-
-    <SfAutoComplete TValue="string" TItem="CombinedCountryInformation" Placeholder="e.g. Australia" DataSource="@GridData">
-        <AutoCompleteFieldSettings Value="CountryName"></AutoCompleteFieldSettings>
-    </SfAutoComplete>
-    <br/>
-
     <SfQueryBuilder @ref="Querybuilder" DataSource="@GridData">
         <QueryBuilderRule Condition="or" Rules="@ImportRules"></QueryBuilderRule>
         <QueryBuilderEvents RuleChanged="UpdateRule"></QueryBuilderEvents>
@@ -79,7 +72,7 @@
 
     private async Task GetCountriesWithData()
     {
-        var countryInfoUrl = "http://18.203.153.44:80/api/Country/combined";
+        var countryInfoUrl = "http://54.76.66.207:80/api/Country/combined";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -92,7 +85,7 @@
         {
             Condition = "or",
             Rules = new List<RuleModel> {
-            new RuleModel { Field = "CountryName", Value = "Ireland", Operator = "equals"  } },
+            new RuleModel { Field = "CountryName", Value = "Ireland", Operator = "Equal"  } },
         };
         this.GetRule = await Querybuilder.GetValidRules(Rule);
         this.UpdateRule(new RuleChangeEventArgs() { Name = "", PreviousRule = null, Type = "", Rule = this.GetRule });
