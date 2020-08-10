@@ -1,19 +1,21 @@
 ﻿@page "/charts"
+@using System.Threading
 @using CovidUI.Responses
 @using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.SplitButtons
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
 
-    <SfAccumulationChart Title="Top 10 Deaths">
-        <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
-        <AccumulationChartEvents Loaded="@FilterTop10Deaths"></AccumulationChartEvents>
+<SfAccumulationChart Title="Top 10 Deaths">
+    <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+    <AccumulationChartEvents Loaded="@FilterTop10Deaths"></AccumulationChartEvents>
 
-        <AccumulationChartSeriesCollection>
-            <AccumulationChartSeries DataSource="@ChartDataDeaths" XName="CountryName" YName="DataPoint" Name="Text">
-                <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
-            </AccumulationChartSeries>
-        </AccumulationChartSeriesCollection>
-    </SfAccumulationChart>
+    <AccumulationChartSeriesCollection>
+        <AccumulationChartSeries DataSource="@ChartDataDeaths" XName="CountryName" YName="DataPoint" Name="Text">
+            <AccumulationDataLabelSettings Visible="true" Name="CountryName"></AccumulationDataLabelSettings>
+        </AccumulationChartSeries>
+    </AccumulationChartSeriesCollection>
+</SfAccumulationChart>
 
 <SfAccumulationChart Title="Top 10 Active">
     <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
@@ -65,7 +67,7 @@
 
     private async Task GetCountriesWithData()
     {
-        var countryInfoUrl = "http://localhost:80/api/Country/combined";
+        var countryInfoUrl = "http://54.76.66.207:80/api/Country/combined";
         var response = await Http.GetAsync(countryInfoUrl);
         var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -74,7 +76,7 @@
         await FilterTop10Confirmed();
         await FilterTop10Recovered();
         await FilterTop10Deaths();
-
+        Thread.Sleep(1000);
     }
 
     private async Task FilterTop10Deaths()
@@ -162,5 +164,10 @@
         public string CountryName { get; set; }
         public int DataPoint { get; set; }
         public string Text { get; set; }
+    }
+
+    public void Redirect()
+    {
+        NavigationManager.NavigateTo($"/");
     }
 }

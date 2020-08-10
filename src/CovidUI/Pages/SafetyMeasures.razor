@@ -1,0 +1,83 @@
+﻿@page "/safety"
+@using System.Threading
+@using CovidUI.Extensions
+@using CovidUI.Responses
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Charts
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+
+
+<SfAccumulationChart Title="Measures Impact" EnableSmartLabels="true">
+    <AccumulationChartLegendSettings Visible="true"></AccumulationChartLegendSettings>
+    <AccumulationChartSeriesCollection>
+        <AccumulationChartSeries DataSource="@ListOfMeasures" XName="MeasureName" YName="MeasureImpact">
+            <AccumulationDataLabelSettings Visible="true" Name="MeasureName" Position="AccumulationLabelPosition.Outside"></AccumulationDataLabelSettings>
+        </AccumulationChartSeries>
+    </AccumulationChartSeriesCollection>
+</SfAccumulationChart>
+
+
+@code{
+
+    public CountrySafetyMeasures CountrySafetyMeasures;
+    public List<Measures> ListOfMeasures;
+    public string countryCode = "IE";
+
+    protected override async void OnInitialized()
+    {
+        GetQueryStringValues();
+        NavigationManager.LocationChanged += HandleLocationChanged;
+        CountrySafetyMeasures = new CountrySafetyMeasures();
+        ListOfMeasures = new List<Measures>();
+        await GetCountrySafetyData(countryCode);
+        Thread.Sleep(1000);
+    }
+
+
+    void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        GetQueryStringValues();
+        StateHasChanged();
+    }
+
+    void GetQueryStringValues()
+    {
+        NavigationManager.TryGetQueryString<string>("countryCode", out countryCode);
+    }
+    private async Task GetCountrySafetyData(string countryCode = "IE")
+    {
+        var countryInfoUrl = $"http://54.76.66.207:80/api/Country/stats/{countryCode}";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        CountrySafetyMeasures = System.Text.Json.JsonSerializer.Deserialize<CountrySafetyMeasures>(responseContent);
+
+        ConvertMeasures(CountrySafetyMeasures);
+    }
+    public class Measures
+    {
+        public string MeasureName { get; set; }
+        public decimal MeasureImpact { get; set; }
+    }
+
+    private void ConvertMeasures(CountrySafetyMeasures countryData)
+    {
+        var measures = new Dictionary<string, decimal>();
+        measures = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, decimal>>(CountrySafetyMeasures.MeasureImportances);
+
+        foreach (var measure in measures)
+        {
+            ListOfMeasures.Add(new Measures
+            {
+                MeasureName = measure.Key,
+                MeasureImpact = measure.Value
+            });
+
+            Console.WriteLine($"{measure.Key}");
+            Console.WriteLine($"{measure.Value}");
+        }
+    }
+
+}

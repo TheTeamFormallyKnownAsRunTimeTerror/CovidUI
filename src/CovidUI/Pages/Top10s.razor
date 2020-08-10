@@ -1,0 +1,71 @@
+﻿@page "/column"
+@using System.Threading
+@using CovidUI.Responses
+@using Syncfusion.Blazor.Charts
+@inject HttpClient Http
+
+
+    <SfChart>
+        <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@ChartDataList" Name="Active" XName="Country" Width="2" Opacity="1" YName="Active" Type="ChartSeriesType.Column">
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartDataList" Name="Deaths" XName="Country" Width="2" Opacity="1" YName="Deaths" Type="ChartSeriesType.Column">
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartDataList" Name="Recovered" XName="Country" Width="2" Opacity="1" YName="Recovered" Type="ChartSeriesType.Column">
+            </ChartSeries>
+        </ChartSeriesCollection>
+    </SfChart>
+
+@code{
+
+    private List<CombinedCountryInformation> CountryData { get; set; }
+    private List<ChartData> ChartDataList { get; set; }
+
+    public class ChartData
+    {
+        public string Country;
+        public double Deaths;
+        public double Active;
+        public double Recovered;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        CountryData = new List<CombinedCountryInformation>();
+        ChartDataList = new List<ChartData>();
+        await GetCountriesWithData();
+        Thread.Sleep(1000);
+    }
+
+    private async Task GetCountriesWithData()
+    {
+        var countryInfoUrl = "http://54.76.66.207:80/api/Country/combined";
+        var response = await Http.GetAsync(countryInfoUrl);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        CountryData = System.Text.Json.JsonSerializer.Deserialize<List<CombinedCountryInformation>>(responseContent); //TODO
+        await FilterTop10Confirmed();
+    }
+
+    private async Task FilterTop10Confirmed()
+    {
+        var top10 = (from q in CountryData
+                     orderby q.Confirmed descending
+                     select q).Take(10).ToList();
+
+        var totalActive = top10.Sum(x => x.Confirmed);
+        foreach (var countryData in top10)
+        {
+            var dataPoint = new ChartData
+            {
+                Country = countryData.CountryName,
+                Active = countryData.Active,
+                Deaths = countryData.Deaths,
+                Recovered = countryData.Recovered
+            };
+
+            ChartDataList.Add(dataPoint);
+        }
+    }
+}
